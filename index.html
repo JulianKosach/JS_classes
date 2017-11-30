@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style>
+		* {
+			padding: 0;
+			margin: 0;
+		}
+		body {
+			font-size: 14px;
+			line-height: 18px;
+		}
+		a, button {
+			border: none;
+			outline: none;
+			padding: 3px 10px;
+			cursor: pointer;
+		}
+		.game-field {
+			position: relative;
+		}
+		.game-field__create-button {
+			position: absolute;
+			top: 100%;
+			left: 10%;
+			width: 80%;
+			background: #fff;
+			color: #333;
+			border: 3px solid #888;
+		}
+		.btn {
+			width: 30%;
+			line-height: 20px;
+		}
+	</style>
+</head>
+<body>
+	
+	<script>
+
+		// Main Game constructor
+		function Game(gameOptions) {
+			this._gameOptions = gameOptions || {};
+		}
+
+		Game.prototype.initGameField = function (gameFieldOptions) {
+			var _this = this;
+			gameFieldOptions = gameFieldOptions || {};
+			_this._gameField = document.createElement('div');
+			_this._gameField.className = "game-field";
+
+			_this._gameField.style.width = gameFieldOptions.width || '300px';
+			_this._gameField.style.height = gameFieldOptions.height || '300px';
+			_this._gameField.style.border = gameFieldOptions.border || "1px solid #666";
+			if (gameFieldOptions.margin) _this._gameField.style.margin = gameFieldOptions.margin;
+			if (gameFieldOptions.background) _this._gameField.style.background = gameFieldOptions.background;
+			var wrap = gameFieldOptions.wrap || document.getElementsByTagName('body')[0];
+			wrap.append(_this._gameField);
+			return this;
+		};
+
+		Game.prototype.clearGameField = function () {
+			this._gameField.innerHTML = "";
+			return this;
+		};
+
+		Game.prototype.addButtonsOnDiagonal = function () {
+			this._gameField.append( new RedButton({ text:"Button 1", positioning: { position: 'absolute', left: '0', top: '0' } }).draw() );
+			this._gameField.append( new GreenButton({ text:"Button 2", positioning: { position: 'absolute', left: '35%', top: '50%' } }).draw() );
+			this._gameField.append( new BlueButton({ text:"Button 3", positioning: { position: 'absolute', left: '70%', top: '90%' } }).draw() );
+			return this;
+		};
+
+		Game.prototype.initCreateButton = function () {
+			var _this = this;
+			_this._createButton = document.createElement('button');
+			_this._createButton.innerHTML = "Create 3 buttons";
+			_this._createButton.className = "game-field__create-button";
+			_this._createButton.addEventListener('click', function(){
+				_this.clearGameField();
+				_this.initCreateButton();
+				_this.addButtonsOnDiagonal();
+			});
+			_this._gameField.append(_this._createButton);
+			return this;
+		};
+
+		Game.prototype.initGame = function(){
+			this.initGameField(this._gameOptions.gameFieldOptions);
+			this.initCreateButton();
+			console.log('Your game is inited!');
+			return this;
+		};
+
+
+
+
+
+		// Main Button constructor
+		function Button(buttonOptions) {
+			this._buttonElement = document.createElement('button');
+			this._buttonElement.className = "btn";
+			this._buttonOptions = buttonOptions || {};
+		}
+
+		Button.prototype.render = function(){
+			this._buttonElement.innerHTML = this._buttonOptions.text || 'Button';
+			this._buttonElement.style.background = this._buttonOptions.backgroundColor || '#fff';
+			this._buttonElement.style.color = this._buttonOptions.textColor || '#333';
+			if (this._buttonOptions.positioning) {
+				this._buttonElement.style.position = this._buttonOptions.positioning.position || 'absolute';
+				this._buttonElement.style.left = this._buttonOptions.positioning.left || '0';
+				this._buttonElement.style.top = this._buttonOptions.positioning.top || '0';
+			}
+			return this;
+		};
+
+		Button.prototype.draw = function(){
+			this.render();
+			return this._buttonElement;
+		};
+
+
+
+		// Red Button constructor
+		function RedButton(buttonOptions) {
+			Button.apply(this, arguments);
+			this._buttonElement.className = "btn btn--red";
+			this._buttonOptions.backgroundColor = 'rgb(220,20,20)';
+			this._buttonOptions.textColor = '#fff';
+		}
+		RedButton.prototype = Object.create(Button.prototype);
+		RedButton.prototype.constructor = Button;
+
+
+		// Green Button constructor
+		function GreenButton(buttonOptions) {
+			Button.apply(this, arguments);
+			this._buttonElement.className = "btn btn--greed";
+			this._buttonOptions.backgroundColor = 'rgb(20,220,20)';
+			this._buttonOptions.textColor = '#fff';
+		}
+		GreenButton.prototype = Object.create(Button.prototype);
+		GreenButton.prototype.constructor = Button;
+
+
+		// Blue Button constructor
+		function BlueButton(buttonOptions) {
+			Button.apply(this, arguments);
+			this._buttonElement.className = "btn btn--blue";
+			this._buttonOptions.backgroundColor = 'rgb(20,20,220)';
+			this._buttonOptions.textColor = '#fff';
+		}
+		BlueButton.prototype = Object.create(Button.prototype);
+		BlueButton.prototype.constructor = Button;
+
+
+
+
+
+		document.addEventListener('DOMContentLoaded', function() {
+				
+			var myGame = new Game({
+				gameFieldOptions: {
+					width: '400px',
+					height: '400px',
+					border: '6px solid #888',
+					background: 'rgba(10, 180, 40, 0.3)',
+					margin: '10px'
+				}
+			}).initGame();
+
+		});
+	</script>
+</body>
+</html>
