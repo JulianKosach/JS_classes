@@ -1,0 +1,99 @@
+* {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  font-size: 14px;
+  line-height: 18px;
+  font-family: Arial, sans-serif;
+}
+
+a,
+button,
+select,
+input,
+label {
+  border: none;
+  outline: none;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+
+#game {
+	margin: 20px;
+}
+
+.game-field {
+  position: relative;
+  width: 400px;
+  height: 400px;
+  margin: auto;
+  background: #ddd;
+  border: 6px solid #888;
+}
+
+.game-field__create-button {
+	display: block;
+  background: #fff;
+  color: #333;
+  border: 3px solid #888;
+  height: 40px;
+  width: 100%;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.game-field__settings {
+	width: 406px;
+	margin: auto;
+  border: 3px solid #888;
+  border-top: 0;
+}
+
+.game-field__count-label,
+.game-field__random-label,
+.game-field__player-label,
+.game-field__settings label {
+  padding: 3px 10px;
+	display: block;
+  border: 3px solid #888;
+  text-align: center;
+}
+.game-field__random-checkbox {
+	display: inline-block;
+	margin-left: 10px;
+  vertical-align: middle;
+}
+
+.game-field__color-field {
+	border: 1px solid #ccc;
+	text-align: center;
+	width: 110px;
+}
+
+.btn {
+  width: 10%;
+  height: 10%;
+  line-height: 1;
+  background: #777;
+  border: 2px solid #333;
+  color: #fff;
+  font-weight: bold;
+  box-sizing: border-box;
+}
+
+.btn--red {
+  background: #ee0000;
+  color: #fff;
+}
+
+.btn--green {
+  background: #00dd00;
+  color: #fff;
+}
+
+.btn--blue {
+  background: #0000dd;
+  color: #fff;
+}

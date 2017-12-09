@@ -3,93 +3,124 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Document</title>
-	<style>
-		* {
-			padding: 0;
-			margin: 0;
-		}
-		body {
-			font-size: 14px;
-			line-height: 18px;
-		}
-		a, button {
-			border: none;
-			outline: none;
-			padding: 3px 10px;
-			cursor: pointer;
-		}
-		.game-field {
-			position: relative;
-		}
-		.game-field__create-button {
-			position: absolute;
-			top: 100%;
-			left: 10%;
-			width: 80%;
-			background: #fff;
-			color: #333;
-			border: 3px solid #888;
-		}
-		.btn {
-			width: 30%;
-			line-height: 20px;
-		}
-	</style>
+	<link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+	<div id="game"></div>
 	
 	<script>
 
 		// Main Game constructor
 		function Game(gameOptions) {
 			this._gameOptions = gameOptions || {};
+			this._max_players_count = gameOptions.max_players_count || 4;
+			this._players_count = gameOptions.initial_players_count || 4;
+			this._set_random = gameOptions.set_random || true;
+			this._wrap = (this._gameOptions.wrap && document.querySelector(this._gameOptions.wrap)) || document.getElementsByTagName('body')[0];
 		}
 
-		Game.prototype.initGameField = function (gameFieldOptions) {
-			var _this = this;
-			gameFieldOptions = gameFieldOptions || {};
-			_this._gameField = document.createElement('div');
-			_this._gameField.className = "game-field";
-
-			_this._gameField.style.width = gameFieldOptions.width || '300px';
-			_this._gameField.style.height = gameFieldOptions.height || '300px';
-			_this._gameField.style.border = gameFieldOptions.border || "1px solid #666";
-			if (gameFieldOptions.margin) _this._gameField.style.margin = gameFieldOptions.margin;
-			if (gameFieldOptions.background) _this._gameField.style.background = gameFieldOptions.background;
-			var wrap = gameFieldOptions.wrap || document.getElementsByTagName('body')[0];
-			wrap.append(_this._gameField);
+		Game.prototype.initGameField = function() {
+			this._gameField = document.createElement('div');
+			this._gameField.className = "game-field";
+			this._wrap.append(this._gameField);
 			return this;
 		};
 
-		Game.prototype.clearGameField = function () {
+		Game.prototype.clearGameField = function() {
 			this._gameField.innerHTML = "";
 			return this;
 		};
 
-		Game.prototype.addButtonsOnDiagonal = function () {
-			this._gameField.append( new RedButton({ text:"Button 1", positioning: { position: 'absolute', left: '0', top: '0' } }).draw() );
-			this._gameField.append( new GreenButton({ text:"Button 2", positioning: { position: 'absolute', left: '35%', top: '50%' } }).draw() );
-			this._gameField.append( new BlueButton({ text:"Button 3", positioning: { position: 'absolute', left: '70%', top: '90%' } }).draw() );
+		Game.prototype.addButtons = function () {
+			var _this = this;
+			for (var i=1; i<=this._players_count; i++) {
+				this._gameField.append( new Button({
+					text: i,
+					backgroundColor: _this['_player_field_'+i].querySelector('input').value,
+					positioning: {
+						left: (_this._set_random) ? Math.random()*90+"%" : !(i%2)*90+'%',
+						top: (_this._set_random) ? Math.random()*90+"%" : (i>2&1)*90+'%'
+					}
+				}).draw() );
+			}
 			return this;
 		};
 
-		Game.prototype.initCreateButton = function () {
+		Game.prototype.initCreateButton = function() {
 			var _this = this;
-			_this._createButton = document.createElement('button');
-			_this._createButton.innerHTML = "Create 3 buttons";
-			_this._createButton.className = "game-field__create-button";
-			_this._createButton.addEventListener('click', function(){
-				_this.clearGameField();
-				_this.initCreateButton();
-				_this.addButtonsOnDiagonal();
+			this._createButton = document.createElement('button');
+			this._createButton.innerHTML = "Create";
+			this._createButton.className = "game-field__create-button";
+			this._createButton.addEventListener('click', function(){
+				_this.createClickHandler();
 			});
-			_this._gameField.append(_this._createButton);
+			this._settingsBlock.append(_this._createButton);
+			return this;
+		};
+
+		Game.prototype.createClickHandler = function() {
+			this.clearGameField();
+			this.addButtons();
+		};
+
+		Game.prototype.initGameSettings = function() {
+			var _this = this;
+			this._settingsBlock = document.createElement('div');
+			this._settingsBlock.className = "game-field__settings";
+			// random positioning checkbox
+			var random_label = document.createElement('label');
+			random_label.className = "game-field__random-label";
+			random_label.innerHTML = "Random positioning";
+			var checkbox = document.createElement('input');
+			checkbox.className = "game-field__random-checkbox";
+			checkbox.setAttribute('type', 'checkbox');
+			if (_this._set_random) checkbox.setAttribute('checked', 'checked');
+			checkbox.addEventListener('change', function(){
+				_this._set_random = this.checked;
+			});
+			random_label.append(checkbox);
+			this._settingsBlock.append(random_label);
+			// players count select
+			var select_label = document.createElement('div');
+			select_label.className = "game-field__count-label";
+			select_label.innerHTML = "Players count";
+			var select = document.createElement('select');
+			select.className = "game-field__count-select";
+			for (var i=1; i<=_this._max_players_count; i++) {
+				var option = document.createElement('option');
+				option.innerHTML = i;
+				if (i === _this._players_count) option.setAttribute('selected', 'selected');
+				select.append(option);
+			}
+			select.addEventListener('change', function(){
+				_this._players_count = this.value;
+				for (var i=1; i<=_this._max_players_count; i++) {
+					_this['_player_field_'+i].style.display = (i<=_this._players_count) ? 'block' : 'none';
+				}
+			});
+			select_label.append(select);
+			this._settingsBlock.append(select_label);
+			// inputs for players
+			for (var i=1; i<=_this._max_players_count; i++) {
+				var label = document.createElement('label');
+				label.innerHTML = 'Player '+i+' color - ';
+				label.style.display = (i<=_this._players_count) ? 'block' : 'none';
+				var color_input = document.createElement('input');
+				color_input.className = "game-field__color-field";
+				color_input.setAttribute('placeholder', '#777777');
+				label.append(color_input);
+				this['_player_field_'+i] = label;
+				this._settingsBlock.append(label);
+			}
+			this.initCreateButton();
+			this._wrap.append(this._settingsBlock);
 			return this;
 		};
 
 		Game.prototype.initGame = function(){
 			this.initGameField(this._gameOptions.gameFieldOptions);
-			this.initCreateButton();
+			this.initGameSettings();
 			console.log('Your game is inited!');
 			return this;
 		};
@@ -107,12 +138,13 @@
 
 		Button.prototype.render = function(){
 			this._buttonElement.innerHTML = this._buttonOptions.text || 'Button';
-			this._buttonElement.style.background = this._buttonOptions.backgroundColor || '#fff';
-			this._buttonElement.style.color = this._buttonOptions.textColor || '#333';
 			if (this._buttonOptions.positioning) {
 				this._buttonElement.style.position = this._buttonOptions.positioning.position || 'absolute';
 				this._buttonElement.style.left = this._buttonOptions.positioning.left || '0';
 				this._buttonElement.style.top = this._buttonOptions.positioning.top || '0';
+			}
+			if (this._buttonOptions.backgroundColor) {
+				this._buttonElement.style.backgroundColor = this._buttonOptions.backgroundColor;
 			}
 			return this;
 		};
@@ -128,8 +160,6 @@
 		function RedButton(buttonOptions) {
 			Button.apply(this, arguments);
 			this._buttonElement.className = "btn btn--red";
-			this._buttonOptions.backgroundColor = 'rgb(220,20,20)';
-			this._buttonOptions.textColor = '#fff';
 		}
 		RedButton.prototype = Object.create(Button.prototype);
 		RedButton.prototype.constructor = Button;
@@ -138,9 +168,7 @@
 		// Green Button constructor
 		function GreenButton(buttonOptions) {
 			Button.apply(this, arguments);
-			this._buttonElement.className = "btn btn--greed";
-			this._buttonOptions.backgroundColor = 'rgb(20,220,20)';
-			this._buttonOptions.textColor = '#fff';
+			this._buttonElement.className = "btn btn--green";
 		}
 		GreenButton.prototype = Object.create(Button.prototype);
 		GreenButton.prototype.constructor = Button;
@@ -150,8 +178,6 @@
 		function BlueButton(buttonOptions) {
 			Button.apply(this, arguments);
 			this._buttonElement.className = "btn btn--blue";
-			this._buttonOptions.backgroundColor = 'rgb(20,20,220)';
-			this._buttonOptions.textColor = '#fff';
 		}
 		BlueButton.prototype = Object.create(Button.prototype);
 		BlueButton.prototype.constructor = Button;
@@ -163,13 +189,7 @@
 		document.addEventListener('DOMContentLoaded', function() {
 				
 			var myGame = new Game({
-				gameFieldOptions: {
-					width: '400px',
-					height: '400px',
-					border: '6px solid #888',
-					background: 'rgba(10, 180, 40, 0.3)',
-					margin: '10px'
-				}
+				wrap: '#game'
 			}).initGame();
 
 		});
