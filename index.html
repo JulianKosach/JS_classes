@@ -17,6 +17,7 @@
 			this._max_players_count = gameOptions.max_players_count || 4;
 			this._players_count = gameOptions.initial_players_count || 4;
 			this._set_random = gameOptions.set_random || true;
+			this._players = [];
 			this._wrap = (this._gameOptions.wrap && document.querySelector(this._gameOptions.wrap)) || document.getElementsByTagName('body')[0];
 		}
 
@@ -29,20 +30,31 @@
 
 		Game.prototype.clearGameField = function() {
 			this._gameField.innerHTML = "";
+			this._players = [];
 			return this;
 		};
 
-		Game.prototype.addButtons = function () {
+		Game.prototype.addPlayers = function () {
 			var _this = this;
-			for (var i=1; i<=this._players_count; i++) {
-				this._gameField.append( new Button({
-					text: i,
-					backgroundColor: _this['_player_field_'+i].querySelector('input').value,
-					positioning: {
-						left: (_this._set_random) ? Math.random()*90+"%" : !(i%2)*90+'%',
-						top: (_this._set_random) ? Math.random()*90+"%" : (i>2&1)*90+'%'
-					}
-				}).draw() );
+			for (var i=0; i<this._players_count; i++) {
+				if (!_this._players[i]) {
+					_this._players[i] = new Player({
+						name: i+1,
+						bgColor: _this['_player_field_'+i].querySelector('input').value,
+						x: 0,
+						y: 0,
+						game: _this,
+						gameField: _this._gameField
+					});
+					_this._gameField.append( _this._players[i].draw() );
+				} 
+				var player = _this._players[i];
+				if (_this._set_random) {
+					player.moveTo('random', 'random');
+				} else {
+					player.moveTo('corner'+(i+1), 'corner'+(i+1));
+				}
+				player.render();
 			}
 			return this;
 		};
@@ -60,8 +72,8 @@
 		};
 
 		Game.prototype.createClickHandler = function() {
-			this.clearGameField();
-			this.addButtons();
+			// this.clearGameField();
+			this.addPlayers();
 		};
 
 		Game.prototype.initGameSettings = function() {
@@ -87,22 +99,23 @@
 			select_label.innerHTML = "Players count";
 			var select = document.createElement('select');
 			select.className = "game-field__count-select";
-			for (var i=1; i<=_this._max_players_count; i++) {
+			for (var i=0; i<_this._max_players_count; i++) {
 				var option = document.createElement('option');
-				option.innerHTML = i;
-				if (i === _this._players_count) option.setAttribute('selected', 'selected');
+				option.innerHTML = i+1;
+				if (i === _this._players_count-1) option.setAttribute('selected', 'selected');
 				select.append(option);
 			}
 			select.addEventListener('change', function(){
 				_this._players_count = this.value;
-				for (var i=1; i<=_this._max_players_count; i++) {
-					_this['_player_field_'+i].style.display = (i<=_this._players_count) ? 'block' : 'none';
+				for (var i=0; i<_this._max_players_count; i++) {
+					_this['_player_field_'+i].style.display = (i<_this._players_count) ? 'block' : 'none';
+					_this.clearGameField();
 				}
 			});
 			select_label.append(select);
 			this._settingsBlock.append(select_label);
 			// inputs for players
-			for (var i=1; i<=_this._max_players_count; i++) {
+			for (var i=0; i<_this._max_players_count; i++) {
 				var label = document.createElement('label');
 				label.innerHTML = 'Player '+i+' color - ';
 				label.style.display = (i<=_this._players_count) ? 'block' : 'none';
@@ -112,6 +125,14 @@
 				label.append(color_input);
 				this['_player_field_'+i] = label;
 				this._settingsBlock.append(label);
+				(function(index){
+					color_input.addEventListener('change', function(){
+						if (!(_this._players && _this._players[index])) return;
+						_this._players[index].setOptions({
+							bgColor: this.value
+						}).render();
+					});
+				})(i);
 			}
 			this.initCreateButton();
 			this._wrap.append(this._settingsBlock);
@@ -129,58 +150,100 @@
 
 
 
-		// Main Button constructor
-		function Button(buttonOptions) {
-			this._buttonElement = document.createElement('button');
-			this._buttonElement.className = "btn";
-			this._buttonOptions = buttonOptions || {};
+		// Main Player constructor
+		function Player(playerOptions) {
+			this._playerElement = document.createElement('button');
+			this._playerElement.className = "btn";
+			this.setOptions(playerOptions);
 		}
 
-		Button.prototype.render = function(){
-			this._buttonElement.innerHTML = this._buttonOptions.text || 'Button';
-			if (this._buttonOptions.positioning) {
-				this._buttonElement.style.position = this._buttonOptions.positioning.position || 'absolute';
-				this._buttonElement.style.left = this._buttonOptions.positioning.left || '0';
-				this._buttonElement.style.top = this._buttonOptions.positioning.top || '0';
+		Player.prototype.setOptions = function(playerOptions){
+			playerOptions = playerOptions || {};
+			if (playerOptions.hasOwnProperty('name')) this._name = playerOptions.name;
+			if (playerOptions.hasOwnProperty('x')) this._x = playerOptions.x;
+			if (playerOptions.hasOwnProperty('y')) this._y = playerOptions.y;
+			if (playerOptions.hasOwnProperty('bgColor')) this._bgColor = playerOptions.bgColor;
+			if (playerOptions.hasOwnProperty('game')) this._game = playerOptions.game;
+			if (playerOptions.hasOwnProperty('gameField')) this._gameField = playerOptions.gameField;
+			return this;
+		}
+
+		Player.prototype.moveTo = function(x, y){
+			new_x = x.toString() || 0;
+			new_y = y.toString() || 0;
+			var field_size = this._gameField.getBoundingClientRect();
+			var player_style = getComputedStyle(this._playerElement);
+			if (new_x === 'random') {
+				new_x = Math.random()*( field_size.width - parseInt(player_style.width) ) + "px";
+			} else if ( new_x.includes('corner')) {
+				num = +new_x.replace('corner', '') || 1;
+				new_x = !(num%2)*( field_size.height - parseInt(player_style.height) ) + "px";
 			}
-			if (this._buttonOptions.backgroundColor) {
-				this._buttonElement.style.backgroundColor = this._buttonOptions.backgroundColor;
+			if (new_y === 'random') {
+				new_y = Math.random()*( field_size.height - parseInt(player_style.height) ) + "px";
+			} else if (new_y.includes('corner')) {
+				num = +new_y.replace('corner', '') || 1;
+				new_y = (num>2&1)*( field_size.height - parseInt(player_style.height) ) + "px";
 			}
+			if (this.isCollapsed(new_x, new_y)) {
+				return this;
+			}
+			this.setOptions({
+				x: new_x,
+				y: new_y
+			});
+			return this;
+		}
+
+		Player.prototype.isCollapsed = function(x, y){
+			x = x || this._x;
+			y = y || this._y;
+			var players = this._game._players;
+			for (var i=0; i<4; i++) {
+				console.log(i);
+			}
+			for (var i=0; i<players.length; i++) {
+				if (this === players[i]) return;
+				var is_collapsed_x = false;
+				var is_collapsed_y = false;
+				this_style = getComputedStyle(this._playerElement);
+				player_style = getComputedStyle(players[i]._playerElement);
+				console.log(i, parseInt(x), parseInt(player_style.left), parseInt(player_style.width));
+				if (parseInt(x) + parseInt(this_style.width) >= parseInt(player_style.left) && parseInt(x) <= parseInt(player_style.left) + parseInt(player_style.width) ) is_collapsed_x = true;
+				if (parseInt(y) + parseInt(this_style.height) >= parseInt(player_style.top) && parseInt(y) <= parseInt(player_style.top) + parseInt(player_style.height) ) is_collapsed_y = true;
+				if (is_collapsed_x && is_collapsed_y) {
+					console.log('is collapsed');
+					return true;
+				}
+			}
+			return false;
+		}
+
+
+		Player.prototype.render = function(){
+			this._playerElement.innerHTML = this._name || 'player';
+			this._playerElement.style.position = 'absolute';
+			this._playerElement.style.left = this._x || '0';
+			this._playerElement.style.top = this._y || '0';
+			if (this._bgColor) this._playerElement.style.backgroundColor = this._bgColor;
 			return this;
 		};
 
-		Button.prototype.draw = function(){
+		Player.prototype.draw = function(){
 			this.render();
-			return this._buttonElement;
+			return this._playerElement;
 		};
 
 
 
-		// Red Button constructor
-		function RedButton(buttonOptions) {
-			Button.apply(this, arguments);
-			this._buttonElement.className = "btn btn--red";
-		}
-		RedButton.prototype = Object.create(Button.prototype);
-		RedButton.prototype.constructor = Button;
 
-
-		// Green Button constructor
-		function GreenButton(buttonOptions) {
-			Button.apply(this, arguments);
-			this._buttonElement.className = "btn btn--green";
-		}
-		GreenButton.prototype = Object.create(Button.prototype);
-		GreenButton.prototype.constructor = Button;
-
-
-		// Blue Button constructor
-		function BlueButton(buttonOptions) {
-			Button.apply(this, arguments);
-			this._buttonElement.className = "btn btn--blue";
-		}
-		BlueButton.prototype = Object.create(Button.prototype);
-		BlueButton.prototype.constructor = Button;
+		// Red Player constructor
+		// function RedButton(buttonOptions) {
+		// 	Button.apply(this, arguments);
+		// 	this._buttonElement.className = "btn btn--red";
+		// }
+		// RedButton.prototype = Object.create(Button.prototype);
+		// RedButton.prototype.constructor = Button;
 
 
 

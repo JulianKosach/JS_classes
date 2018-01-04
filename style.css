@@ -21,7 +21,9 @@ label {
 }
 
 #game {
+  display: inline-block;
 	margin: 20px;
+  border: 6px solid #888;
 }
 
 .game-field {
@@ -30,25 +32,21 @@ label {
   height: 400px;
   margin: auto;
   background: #ddd;
-  border: 6px solid #888;
 }
 
 .game-field__create-button {
 	display: block;
   background: #fff;
   color: #333;
-  border: 3px solid #888;
   height: 40px;
-  width: 100%;
   font-size: 18px;
   font-weight: bold;
+  width: 100%;
 }
 
 .game-field__settings {
-	width: 406px;
 	margin: auto;
-  border: 3px solid #888;
-  border-top: 0;
+  border-top: 6px solid #888;
 }
 
 .game-field__count-label,
@@ -57,7 +55,6 @@ label {
 .game-field__settings label {
   padding: 3px 10px;
 	display: block;
-  border: 3px solid #888;
   text-align: center;
 }
 .game-field__random-checkbox {
@@ -73,8 +70,8 @@ label {
 }
 
 .btn {
-  width: 10%;
-  height: 10%;
+  width: 30%;
+  height: 30%;
   line-height: 1;
   background: #777;
   border: 2px solid #333;
